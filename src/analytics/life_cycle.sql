@@ -3,15 +3,16 @@ WITH tb_daily AS (
         IdCliente,
         substr(DtCriacao, 0, 11) as dtDia
     FROM transacoes
+    WHERE dtDia < '{date}'
 ),
 tb_idade AS (
     SELECT
         IdCliente,
         -- min(dtDia) as dtPrimeiraTransacao,
-        CAST(julianday('now') - julianday(min(dtDia)) as int) as qtdDiasPrimeiraTransacao,
+        CAST(julianday('{date}') - julianday(min(dtDia)) as int) as qtdDiasPrimeiraTransacao,
 
         -- max(dtDia) as dtUltimaTransacao,
-        CAST(julianday('now') - julianday(max(dtDia)) as int) as qtdDiasUltimaTransacao
+        CAST(julianday('{date}') - julianday(max(dtDia)) as int) as qtdDiasUltimaTransacao
 
 
     FROM
@@ -31,7 +32,7 @@ tb_rn AS (
 tb_penultima_ativacao AS (
     SELECT
         *,
-        CAST(julianday('now') - julianday(dtDia) AS int) as qtdDiasPenultimaTransacao
+        CAST(julianday('{date}') - julianday(dtDia) AS int) as qtdDiasPenultimaTransacao
     FROM
         tb_rn
     WHERE
@@ -46,9 +47,9 @@ tb_life_cycle AS (
             WHEN qtdDiasPrimeiraTransacao <= 7 THEN '01-CURIOSO'
             WHEN qtdDiasUltimaTransacao <= 7 AND qtdDiasPenultimaTransacao - qtdDiasUltimaTransacao <= 14 THEN '02-FIEL'
             WHEN qtdDiasUltimaTransacao BETWEEN 8 AND 14 THEN '03-TURISTA'
-            WHEN qtdDiasUltimaTransacao BETWEEN 15 AND 28 THEN '04-DESENCANTADA'
-            WHEN qtdDiasUltimaTransacao > 28 THEN '05-ZUMBI'
-            WHEN qtdDiasUltimaTransacao <= 7 AND qtdDiasPenultimaTransacao - qtdDiasUltimaTransacao BETWEEN 15 AND 28 THEN '06-RECONQUISTADO'
+            WHEN qtdDiasUltimaTransacao BETWEEN 15 AND 27 THEN '04-DESENCANTADA'
+            WHEN qtdDiasUltimaTransacao >= 28 THEN '05-ZUMBI'
+            WHEN qtdDiasUltimaTransacao <= 7 AND qtdDiasPenultimaTransacao - qtdDiasUltimaTransacao BETWEEN 15 AND 27 THEN '06-RECONQUISTADO'
             WHEN qtdDiasUltimaTransacao <= 7 AND qtdDiasPenultimaTransacao - qtdDiasUltimaTransacao > 28 THEN '07-REBORN'
         END AS descLifeCycle
     FROM
@@ -60,9 +61,7 @@ tb_life_cycle AS (
 )
 
 SELECT
-    descLifeCycle,
-    count(*)
+    date('{date}', '-1 day') AS dtRef,
+    *
 FROM
     tb_life_cycle
-GROUP BY
-    descLifeCycle
